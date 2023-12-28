@@ -7,4 +7,7 @@ const { merge } = require('webpack-merge');
    devServer: {
      static: './dist',
    },
+   optimization: {
+    runtimeChunk: 'single',
+   },
  });

@@ -8,7 +8,7 @@ module.exports = {
    plugins: [
      new HtmlWebpackPlugin({
       title: 'Is het al dinsdag?',
-      template: 'dist/index.html'
+      template: './src/index.html'
      }),
    ],
    output: {

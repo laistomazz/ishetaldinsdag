@@ -2,94 +2,34 @@ import './normalize.css';
 import './style.css';
 
 import * as Terminal from 'javascript-terminal';
+import { loveLetter } from './text';
+import { viewRefs, questions } from './constants';
+import {
+    addKeyDownListener,
+    scrollToPageEnd,
+    displayOutputs,
+    getInput,
+    setInput,
+    setCustomOutput,
+    clearInput,
+    isTuesday
+} from './helpers';
 
-const addKeyDownListener = (eventKey, target, onKeyDown) => {
-    target.addEventListener('keydown', e => {
-      if (e.key === eventKey) {
-        onKeyDown();
-  
-        e.preventDefault();
-      }
-    });
-  };
-  
-  const scrollToPageEnd = () => {
-    window.scrollTo(0, document.body.scrollHeight);
-  };
-  
-  // User interface
-  const viewRefs = {
-    input: document.getElementById('input'),
-    output: document.getElementById('output-wrapper')
-  };
-  
-  const createOutputDiv = (className, textContent) => {
-    const div = document.createElement('div');
-  
-    div.className = className;
-    div.appendChild(document.createTextNode(textContent));
-  
-    return div;
-  };
-  
-  const outputToHTMLNode = {
-    [Terminal.OutputType.TEXT_OUTPUT_TYPE]: content =>
-      createOutputDiv('text-output', content),
-    [Terminal.OutputType.TEXT_ERROR_OUTPUT_TYPE]: content =>
-      createOutputDiv('error-output', content),
-    [Terminal.OutputType.HEADER_OUTPUT_TYPE]: content =>
-      createOutputDiv('header-output', `$ ${content.command}`)
-  };
-  
-  const displayOutputs = (outputs) => {
-    viewRefs.output.innerHTML = '';
-  
-    const outputNodes = outputs.map(output =>
-      outputToHTMLNode[output.type](output.content)
-    );
-  
-    for (const outputNode of outputNodes) {
-        viewRefs.output.append(outputNode);
-    }
-  };
-  
-  const getInput = () => viewRefs.input.value;
-  
-  const setInput = (input) => {
-    viewRefs.input.value = input;
-  };
+let currentQuestion = questions.more;
 
-  const setCustomOutput = (output) => {
-    viewRefs.output.append(createOutputDiv('header-output', `$ ${output}`));
-  };
-
-  const setCurrentQuestion = (question) => {
+const setCurrentQuestion = (question) => {
     currentQuestion = question;
     setCustomOutput(question);
-  }
-  
-  const clearInput = () => {
-    setInput('');
-  };
-  
-  // Execution
-  const emulator = new Terminal.Emulator();
-  
-  let emulatorState = Terminal.EmulatorState.createEmpty();
-  const historyKeyboardPlugin = new Terminal.HistoryKeyboardPlugin(emulatorState);
-  const plugins = [historyKeyboardPlugin];
+}
 
-  
-  const questions = {
-      matchDate: `Which day of the month did we match?`,
-      myName: `What's my first name?`,
-      favoriteColor: `Now a very hard question. What's my favorite color?`,
-      love: `Type the command 'love' in`
-    };
-  
-  let currentQuestion = questions.matchDate;
+const matchForCustomCommands = (command) => {
+    if (currentQuestion === questions.more && (command == 'more')) {
+        setCustomOutput(`Good boy 🫠 I can give you more, but first I need to confirm you are you.`);
+        setCurrentQuestion(questions.matchDate);
 
-  const matchForCustomCommands = (command) => {
+        return true;
+    }
+
     if (currentQuestion === questions.matchDate && (command == '28' || command == '28th')) {
         setCustomOutput(`That's right 🤩 What a lucky day!`);
         setCurrentQuestion(questions.myName);
@@ -120,17 +60,8 @@ const addKeyDownListener = (eventKey, target, onKeyDown) => {
 
     if (command == 'love') {
         if (currentQuestion === questions.love) {
-            const currentDate = new Date();
-            const dayOfWeek = currentDate.getDay();
-            let result;
-
-            if (dayOfWeek === 2) {
-                result = `Turns out it's a Tuesday!`;
-            } else {
-                result = `Today is not a Tuesday.`;
-            }
-
-            setCustomOutput(`${result} love result`);
+            console.log(loveLetter);
+            setCustomOutput(`Take a peak into the console 😉`);
         } else {
             setCurrentQuestion(currentQuestion);
         }
@@ -145,7 +76,16 @@ const addKeyDownListener = (eventKey, target, onKeyDown) => {
     }
 
     return false;
-  };
+};
+  
+
+const initEmulator = () => {
+  // Execution
+  const emulator = new Terminal.Emulator();
+  
+  let emulatorState = Terminal.EmulatorState.createEmpty();
+  const historyKeyboardPlugin = new Terminal.HistoryKeyboardPlugin(emulatorState);
+  const plugins = [historyKeyboardPlugin]; 
   
   addKeyDownListener('Enter', viewRefs.input, () => {
     const commandStr = getInput();
@@ -171,14 +111,14 @@ const addKeyDownListener = (eventKey, target, onKeyDown) => {
   });
   
   addKeyDownListener('Tab', viewRefs.input, () => {
-      const autoCompletionStr = emulator.autocomplete(emulatorState, getInput());
-  
+    const autoCompletionStr = emulator.autocomplete(emulatorState, getInput());
     setInput(autoCompletionStr);
   });
+}
 
 const init = () => {
-    setCustomOutput('Hi Frank, I need to confirm you are you');
-    setCurrentQuestion(currentQuestion);
+    initEmulator();
+    setCustomOutput(`${isTuesday()}, but if you're Frank, you can type in 'more'`);
 };
 
 init();
